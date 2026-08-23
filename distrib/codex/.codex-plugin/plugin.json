@@ -1,0 +1,34 @@
+{
+  "name": "financial-experts-said",
+  "author": {
+    "name": "Sergei Mikhailov",
+    "url": "https://github.com/bzSega"
+  },
+  "homepage": "https://github.com/bzSega/financial-experts-said",
+  "repository": "https://github.com/bzSega/financial-experts-said",
+  "license": "MIT",
+  "keywords": [
+    "finance",
+    "experts",
+    "expert-calls",
+    "charts",
+    "moex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Financial Experts Said",
+    "shortDescription": "What did financial experts say — and were they right?",
+    "longDescription": "Source-backed, local SQLite history of expert claims: extract verbatim call cards from supplied sources, search the local database, chart recorded levels against market prices. Bundled Python runtime included; the plugin does not download or verify sources on its own.",
+    "developerName": "Sergei Mikhailov",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/bzSega/financial-experts-said",
+    "defaultPrompt": [
+      "Check whether the financial-experts-said runtime and local thesis database are ready.",
+      "Index this supplied transcript into source-backed draft call cards; do not import cards missing a source URL or date.",
+      "Search the local thesis database for what experts said about gold last month.",
+      "Build an interactive chart from recorded IMOEX levels in the local database."
+    ]
+  },
+  "version": "0.1.0",
+  "description": "Index and audit public financial experts' claims: source-backed verbatim call cards, local SQLite history, charts of recorded levels vs market prices."
+}

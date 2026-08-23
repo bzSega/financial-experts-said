@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FTI Levels — экспертные уровни</title>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  body{font-family:system-ui,Segoe UI,sans-serif;margin:8px;background:#0f1117;color:#e6e8ee}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:14px}
+  select{padding:9px 12px;border-radius:10px;border:1px solid #2a2f3a;font-size:15px;background:#171a23;color:#e6e8ee;max-width:46vw}
+  .chartbox{width:100%;height:58vh;min-height:340px;max-height:600px;border-radius:12px;overflow:hidden;background:#131722}
+  #digest{background:#171a23;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+  #digest .h{font-weight:700;font-size:15px;margin-bottom:4px}
+  #digest .row{padding:7px 0;border-top:1px dashed #2a2f3a}
+  #digest .m{color:#9aa1b2;font-size:11px}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tab{padding:8px 14px;border-radius:10px 10px 0 0;border:1px solid #2a2f3a;border-bottom:none;background:#131722;color:#9aa1b2;font-size:14px;cursor:pointer}
+  .tab.active{background:#171a23;color:#e6e8ee;font-weight:600}
+  .tabpane{display:none}
+  .tabpane.active{display:block}
+  .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px}
+  table{border-collapse:collapse;font-size:12px;background:#171a23;border-radius:8px;overflow:hidden;min-width:640px;width:100%}
+  th,td{border-bottom:1px solid #2a2f3a;padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#1d2230;color:#9aa1b2;font-weight:600}
+  a{color:#4c8dff}
+</style>
+</head>
+<body>
+<h3 style="margin:4px 0 10px">FTI Levels <span style="color:#9aa1b2;font-size:12px">— экспертные уровни · свечи MOEX</span></h3>
+<div class="tabs"><button class="tab active" data-tab="tabChart">📊 Графики</button><button class="tab" data-tab="tabCover">🗂 Покрытие</button></div>
+<div id="tabChart" class="tabpane active">
+<div class="bar">
+  <select id="selAsset"></select>
+  <select id="selExpert"></select>
+  <span style="color:#9aa1b2;font-size:11px">Свежая дата эксперта — сплошная линия, ранние — пунктир. Зум — щипок/колесо.</span>
+</div>
+<div id="digest"></div>
+<div class="chartbox"><div id="chart" style="width:100%;height:100%"></div></div>
+<div class="tblwrap"><table id="tbl"><thead><tr><th>Дата</th><th>Эксперт</th><th>Stance</th><th>Уровень</th><th>Тезис</th><th>Источник</th></tr></thead><tbody></tbody></table></div>
+</div>
+<div id="tabCover" class="tabpane">
+<div class="tblwrap"><div id="coverage"></div></div>
+</div>
+<script>
+const DATA = __DATA__;
+const TYPE_COLOR = {entry:'#26a69a',target:'#2962ff',stop:'#ef5350',support:'#66bb6a',resistance:'#ef5350',range:'#ffb74d'};
+const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+  layout:{background:{type:'solid',color:'#131722'},textColor:'#9aa1b2'},
+  grid:{vertLines:{color:'#1d2230'},horzLines:{color:'#1d2230'}},
+  rightPriceScale:{borderColor:'#2a2f3a'}, timeScale:{borderColor:'#2a2f3a'},
+  autoSize:true, handleScroll:true, handleScale:true
+});
+const assetSel=document.getElementById('selAsset'), expertSel=document.getElementById('selExpert');
+const withTheses=DATA.assets.filter(n=>DATA.theses.some(t=>t.asset_name===n));
+[...new Set(withTheses)].sort().forEach(n=>assetSel.add(new Option(n,n)));
+const experts=[...new Set(DATA.theses.map(t=>t.expert||'эксперт'))].sort();
+expertSel.add(new Option('Все эксперты','*')); experts.forEach(e=>expertSel.add(new Option(e,e)));
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtLvl(t){if(t.price_low==null)return '';
+  return `${t.level_type}: ${t.price_low}${t.price_high&&t.price_high!==t.price_low?'–'+t.price_high:''}${t.currency?' '+t.currency:''}`;}
+
+function render(){
+  const asset=assetSel.value||withTheses[0], expert=expertSel.value;
+  const rows=DATA.theses.filter(t=>t.asset_name===asset&&(expert==='*'||(t.expert||'эксперт')===expert));
+  const latest={}; rows.forEach(t=>{const e=t.expert||'эксперт'; const d=Date.parse(t.date);
+    if(!latest[e]||d>latest[e].ts)latest[e]={ts:d,raw:t.date};});
+  // digest
+  const price=DATA.prices[asset]; let dhtml=`<div class="h">${asset}${expert!=='*'?' — '+expert:''}</div>`;
+  if(price&&price.length){const c=price[price.length-1];
+    dhtml+=`<div class="m">Цена закрытия ${c.time}: <b style="color:#e6e8ee">${c.close}</b></div>`;}
+  [...rows].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)||b.id-a.id).slice(0,3).forEach(t=>{
+    dhtml+=`<div class="row"><b>${esc(t.date.slice(0,10)+' · '+(t.expert||'эксперт')+' · '+(t.stance||'')+(t.price_low!=null?' · '+fmtLvl(t):''))}</b><br>${esc(t.summary||'')}</div>`;});
+  document.getElementById('digest').innerHTML=dhtml;
+  // chart
+  if(window.__series){try{chart.removeSeries(window.__series)}catch(e){}}
+  const candles=(price&&price.length)?price:[];
+  window.__series=chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',
+    borderVisible:false,wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
+  window.__series.setData(candles);
+  const seen=new Set();
+  rows.filter(t=>t.price_low!=null).forEach(t=>{
+    const e=t.expert||'эксперт', fresh=latest[e].raw===t.date;
+    [t.price_low,t.price_high].forEach(pr=>{
+      if(pr==null)return; const key=e+pr.toFixed(2)+t.level_type; if(seen.has(key))return; seen.add(key);
+      window.__series.createPriceLine({price:pr,color:TYPE_COLOR[t.level_type]||'#9aa1b2',
+        lineWidth:fresh?2:1,lineStyle:fresh?0:2,axisLabelVisible:true,
+        title:`${e.split(' ')[0]} ${t.date.slice(5,10)} ${t.level_type}`});
+    });
+  });
+  // table
+  const tb=document.querySelector('#tbl tbody'); tb.innerHTML='';
+  [...rows].sort((a,b)=>Date.parse(b.date)-Date.parse(a.date)||b.id-a.id).forEach(t=>{
+    const url=t.url?t.url+(t.start_sec!=null?(t.url.includes('?')?'&':'?')+'t='+Math.max(0,t.start_sec|0)+'s':''):'';
+    tb.insertAdjacentHTML('beforeend',`<tr><td>${esc(t.date.slice(0,10))}</td><td>${esc(t.expert||'эксперт')}</td><td>${esc(t.stance||'')}</td><td>${t.price_low!=null?esc(fmtLvl(t)):'—'}</td><td>${esc(t.summary||'')}</td><td>${url?`<a href="${esc(url)}">цитата</a>`:''}</td></tr>`);
+  });
+}
+function buildCoverage(){
+  // матрица актив×эксперт: сколько тезисов и кто
+  const map={};
+  DATA.theses.forEach(t=>{const a=t.asset_name,e=t.expert||'б/а';
+    (map[a]=map[a]||{})[e]=(map[a][e]||0)+1;});
+  const rows=Object.entries(map).map(([a,ex])=>{
+    const total=Object.values(ex).reduce((s,n)=>s+n,0);
+    return {a,total,ex,tk:(DATA.theses.find(t=>t.asset_name===a)||{}).ticker||'—'};})
+    .sort((x,y)=>y.total-x.total||x.a.localeCompare(y.a));
+  let h=`<table style="min-width:560px"><thead><tr><th>Актив</th><th>Тикер</th><th>Эксперты (тезисов)</th><th>Всего</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const ex=Object.entries(r.ex).sort((x,y)=>y[1]-x[1]).map(([e,n])=>`${esc(e)} (${n})`).join(' · ');
+    const multi=r.total>1&&Object.keys(r.ex).length>1?' style="color:#ffb74d"':'';
+    h+=`<tr><td>${esc(r.a)}</td><td>${esc(r.tk)}</td><td${multi}>${ex}</td><td>${r.total}</td></tr>`;});
+  h+='</tbody></table>';
+  document.getElementById('coverage').innerHTML=h;
+}
+assetSel.onchange=expertSel.onchange=render;
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll(".tabpane").forEach(p=>p.classList.remove('active'));
+  document.getElementById(b.dataset.tab).classList.add('active');
+});
+if(!assetSel.value&&withTheses.length)assetSel.value=[...new Set(withTheses)].sort()[0];
+buildCoverage();
+render();
+</script>
+</body>
+</html>

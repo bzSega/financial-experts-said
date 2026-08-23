@@ -1,0 +1,20 @@
+{
+  "source_type": "expert_post",
+  "source_title": "Контроль тикера",
+  "source_url": "https://example.invalid/ticker-control",
+  "published_at": "2026-08-15T00:00:00Z",
+  "text": "Сбербанк интересен для наблюдения.",
+  "theses": [
+    {
+      "expert": {"name": "Тестовый эксперт", "aliases": [], "role": ""},
+      "asset": {"name": "Сбербанк", "type": "equity", "ticker": "SBER", "aliases": ["Сбер"]},
+      "asserted_at": "2026-08-15T00:00:00Z",
+      "stance": "watch",
+      "summary": "Тестовый тезис по Сбербанку.",
+      "quote": "Сбербанк интересен для наблюдения.",
+      "levels": [],
+      "tags": ["other"],
+      "extraction_status": "verified"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "source_type": "youtube",
+  "source_title": "Название выпуска или статьи",
+  "source_url": "https://example.com/source",
+  "source_external_id": "youtube:channel-id:video-id",
+  "published_at": "2026-08-14T12:00:00+03:00",
+  "text": "Готовый исходный текст целиком",
+  "theses": [
+    {
+      "expert": {"name": "Имя эксперта", "aliases": [], "role": "аналитик"},
+      "asset": {"name": "Золото", "type": "commodity", "ticker": "XAU", "aliases": []},
+      "asserted_at": "2026-08-14T12:00:00+03:00",
+      "stance": "buy",
+      "summary": "Нейтральная выжимка тезиса.",
+      "quote": "Дословная цитата из исходного текста.",
+      "levels": [{"level_type": "entry", "price_low": 2300, "price_high": 2350, "currency": "USD/oz", "effective_at": "2026-08-14T12:00:00+03:00"}],
+      "tags": ["macro"],
+      "extraction_status": "verified"
+    }
+  ]
+}
