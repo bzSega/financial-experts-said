@@ -46,7 +46,7 @@ Python 3.10+ is the only requirement for the pipeline; charts need internet (MOE
 ### Distributions (pick yours)
 | Runtime | Package | How to install |
 |---|---|---|
-| OpenClaw / ClawHub | `distrib/clawhub/` | `openclaw skills install` from [clawhub.ai/bzSega/financial-experts-said](https://clawhub.ai/bzSega/skills/financial-experts-said) (runtime: clone this repo, see [references/runtime.md](skills/financial-experts-said/references/runtime.md)) |
+| OpenClaw / ClawHub | `distrib/clawhub/` | `openclaw skills install` from [clawhub.ai/bzSega/financial-experts-said](https://clawhub.ai/bzSega/skills/financial-experts-said). ClawHub package is skills-only; install a matching, version-pinned repository runtime and set `FES_ROOT` ([references/runtime.md](distrib/clawhub/references/runtime.md)). Bundled runtime in Codex/Claude Code distributions does not extend to ClawHub. |
 | Claude Code | `distrib/claude-code/` | `claude plugin marketplace add bzSega/financial-experts-said` (or copy `skills/` into `~/.claude/skills/`) |
 | ChatGPT / Codex | `distrib/codex/` | see [distrib/codex/](distrib/codex/) — bundled Python runtime included |
 
@@ -99,7 +99,7 @@ python3 chart/ticker_chart_html.py --db fti.db --out dashboard.html
 ### Дистрибутивы (выберите свой)
 | Среда запуска | Пакет | Как установить |
 |---|---|---|
-| OpenClaw / ClawHub | `distrib/clawhub/` | `openclaw skills install` с [clawhub.ai/bzSega/financial-experts-said](https://clawhub.ai/bzSega/skills/financial-experts-said) (runtime: клонировать репо, см. [references/runtime.md](skills/financial-experts-said/references/runtime.md)) |
+| OpenClaw / ClawHub | `distrib/clawhub/` | `openclaw skills install` с [clawhub.ai/bzSega/financial-experts-said](https://clawhub.ai/bzSega/skills/financial-experts-said). ClawHub-пакет — только инструкции; поставьте закреплённый по версии runtime репозитория и задайте `FES_ROOT` ([references/runtime.md](distrib/clawhub/references/runtime.md)). Bundled runtime из Codex/Claude Code на ClawHub не распространяется. |
 | Claude Code | `distrib/claude-code/` | `claude plugin marketplace add bzSega/financial-experts-said` (или скопировать `skills/` в `~/.claude/skills/`) |
 | ChatGPT / Codex | `distrib/codex/` | см. [distrib/codex/](distrib/codex/) — bundled Python-runtime включён |
 

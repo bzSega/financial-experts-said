@@ -5,6 +5,15 @@
 ## Когда использовать
 «Нарисуй уровни по IMOEX», «график по эксперту X», «интерактивный HTML по уровням».
 
+## Network disclosure
+
+Generating or opening the interactive HTML dashboard requires network access:
+it loads TradingView lightweight-charts from a CDN and fetches market data from
+MOEX ISS. Opening the HTML can disclose metadata such as IP address, time, and
+user agent to those services. State this before generating or opening the
+dashboard and obtain user confirmation when network access has not already
+been approved.
+
 ## Использование
 ```bash
 # PNG-график

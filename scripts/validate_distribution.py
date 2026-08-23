@@ -14,7 +14,7 @@ for pkg, manifest_rel, name_field in [("codex", ".codex-plugin/plugin.json", "na
     check(os.path.isdir(p), f"{pkg}: package exists")
     m = json.load(open(os.path.join(p, manifest_rel)))
     check(m[name_field] == "financial-experts-said", f"{pkg}: name matches dir")
-    check(m["version"] == "0.1.0", f"{pkg}: version bumped")
+    check(m["version"] == "0.1.1", f"{pkg}: version bumped")
     check(os.path.isdir(os.path.join(p, "skills", "financial-experts-said")), f"{pkg}: skill present")
     check(os.path.isfile(os.path.join(p, "runtime", "pipeline", "init_db.py")), f"{pkg}: bundled runtime present")
     # refs
