@@ -58,12 +58,33 @@ GOLD_RUB_G_OZ = 31.1035  # грамм в тройской унции
 EXTRA_MOEX = {"Самолет": ("SMLT", "stock", "shares")}
 
 # Verbal asset names -> Stooq symbols (global instruments MOEX doesn't serve)
+COINGECKO_MAP = {"Биткоин": ("bitcoin", "usd")}
+
 STOOQ_MAP = {
     "S&P 500": "^spx",
     "DXY": "dx.f",
+    "Биткоин": "btcusd",
     "Moderna": "mrna.us",
     "биотех": "ibb.us",
 }
+
+
+def fetch_coingecko(coin, vs, frm, till):
+    """Daily candles (close) from CoinGecko public API for crypto assets."""
+    import urllib.request, datetime as dt
+    f = int(dt.datetime.fromisoformat(frm).timestamp())
+    u = int(dt.datetime.fromisoformat(till + "T23:59:59").timestamp())
+    url = (f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart/range"
+           f"?vs_currency={vs}&from={f}&to={u}")
+    with urllib.request.urlopen(url, timeout=30) as r:
+        pts = json.load(r)["prices"]
+    out, seen = [], set()
+    for ms, px in pts:
+        d = dt.datetime.fromtimestamp(ms / 1000).date().isoformat()
+        if d not in seen:
+            seen.add(d)
+            out.append((d, px, px, px, px))
+    return out
 
 def fetch_candles(sec, e, m, frm, till):
     """Daily candles from MOEX /candles endpoint (fresh data incl. selt/gold)."""
@@ -199,6 +220,16 @@ def main():
     for t in theses:
         t["asset_name"] = canon(t["asset_name"])
     data_assets = sorted(set(t["asset_name"] for t in theses))
+
+    # crypto via CoinGecko (public, daily closes)
+    for name, (coin, vs) in COINGECKO_MAP.items():
+        cn = canon(name)
+        if cn in names and cn not in prices:
+            try:
+                prices[cn] = fetch_coingecko(coin, vs, a.frm, a.till)
+                print("price ok (coingecko)", cn, coin, len(prices[cn]))
+            except Exception as ex:
+                print("price fail (coingecko)", cn, coin, ex)
     # fallback: Stooq for global/verbal assets (S&P, DXY, US stocks)
     for name, sym in STOOQ_MAP.items():
         cn = canon(name)

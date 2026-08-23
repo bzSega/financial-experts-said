@@ -3,7 +3,16 @@
 Визуализация экспертных уровней из базы financial-experts-said (SQLite).
 
 ## Когда использовать
-«Нарисуй уровни по IMOEX», «график по эксперту X», «интерактивный HTML по уровням».
+«Нарисуй уровни по IMOEX», «график по эксперту X», «покажи все тезисы», «интерактивный HTML».
+
+## Which output? (два разных артефакта — не путать)
+
+| Что нужно | Команда | Выход | Что внутри |
+|---|---|---|---|
+| **Свечи + уровни на графике** («нарисуй уровни», «график TradingView») | `chart/ticker_chart_html.py` | `levels-chart.html` | Интерактивные свечи (lightweight-charts, MOEX ISS/stooq) + линии уровней экспертов, фильтры, табы |
+| **Реестр тезисов** («покажи все тезисы», «что говорил X») | `pipeline/dashboard.py` | `registry.html` | Таблица карточек: цитаты, источники, позиции, мини-графики уровней |
+
+Не используйте имя `dashboard.html` для обоих выходов — это гарантированная путаница.
 
 ## Network disclosure
 
@@ -15,15 +24,17 @@ dashboard and obtain user confirmation when network access has not already
 been approved.
 
 ## Использование
+Все команды строятся строго от `FES_ROOT` и `FES_DB` (никогда — относительно текущей директории):
+
 ```bash
 # PNG-график
-python3 chart/ticker_chart.py --db fti.db --asset IMOEX --out chart.png
+python3 "$FES_ROOT/chart/ticker_chart.py" --db "$FES_DB" --asset IMOEX --out chart.png
 
 # Интерактивный HTML (свечи MOEX + уровни экспертов, фильтры, табы)
-python3 chart/ticker_chart_html.py --db fti.db --out dashboard.html
+python3 "$FES_ROOT/chart/ticker_chart_html.py" --db "$FES_DB" --out levels-chart.html
 
 # Реестр-дашборд (таблица тезисов + детализация + мини-графики уровней)
-python3 pipeline/dashboard.py --db fti.db --output dashboard.html
+python3 "$FES_ROOT/pipeline/dashboard.py" --db "$FES_DB" --output registry.html
 ```
 HTML-графика использует `lightweight-charts` с CDN — нужен интернет при открытии.
 
