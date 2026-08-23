@@ -18,6 +18,7 @@
 - Извлечение только с каноническим справочником в промпте — модель обязана использовать точные имена из БД.
 - Импортёр матчит по alias/ticker (casefold, не SQL LOWER — кириллица!).
 - Telegram-источники: `source_external_id` = `telegram:<numerical_channel_id>:<message_id>`.
+- YouTube-источники: `source_external_id` = `youtube:<channel_handle>:<video_id>` (например `youtube:BitkoganTalks:bcZ2RcbOkbM`); импортёр при расхождении матчит источник по source_type+URL.
 - Семантический мерж дублей: UPDATE theses + дедуп identifiers + DELETE, с бэкапом БД.
 
 ## Требования к карточкам
