@@ -1,6 +1,6 @@
 # financial-experts-said
 
-[![ClawHub](https://img.shields.io/badge/ClawHub-financial--experts--said-blue)](https://clawhub.ai/bzsega/skills/financial-experts-said) [![Release](https://img.shields.io/badge/release-v0.1.0-green)](https://github.com/bzSega/financial-experts-said/releases/tag/v0.1.0)
+[![ClawHub](https://img.shields.io/badge/ClawHub-financial--experts--said-blue)](https://clawhub.ai/bzsega/skills/financial-experts-said) [![Release](https://img.shields.io/badge/release-v0.1.1-green)](https://github.com/bzSega/financial-experts-said/releases/tag/openclaw-v0.1.1)
 
 **Financial experts talk every day. Do you remember a month later who promised IMOEX at 2000 — and whether it happened?**
 

@@ -4,6 +4,6 @@
     "name": "Sergei Mikhailov",
     "url": "https://github.com/bzSega"
   },
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "Index and audit public financial experts' claims: source-backed verbatim call cards, local SQLite history, charts of recorded levels vs market prices."
 }
