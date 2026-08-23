@@ -31,7 +31,7 @@ def main():
             "asserted_at": source["published_at"],
             "stance": "buy|overweight|hold|underweight|sell|watch|neutral|unclear",
             "summary": "neutral, factual summary",
-            "quote": "verbatim fragment from source text",
+            "quote": "verbatim fragment from source text, WITHOUT [HH:MM:SS] timestamps",
             "start_sec": None,
             "end_sec": None,
             "levels": [{"level_type": "entry|target|stop|support|resistance|range", "price_low": 0, "price_high": None, "currency": "", "effective_at": source["published_at"], "comment": ""}],
@@ -84,6 +84,7 @@ Rules:
 - A price level must be numeric and stated in the source. Keep entry/target/stop/support/resistance/range separate.
 - asserted_at and effective_at use the supplied publication time unless the source explicitly names another date.
 - Preserve source text byte-for-byte in the text field.
+- Never include [HH:MM:SS] timestamp markers inside quotes: quote only the spoken words, timestamps go to start_sec/end_sec.
 {registry_block}
 JSON schema example:\n{json.dumps(schema, ensure_ascii=False)}
 

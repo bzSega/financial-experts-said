@@ -62,6 +62,39 @@ def register_asset_identifiers(conn, asset_id, asset):
             (asset_id, identifier, identifier_type),
         )
 
+TS_MARK = re.compile(r"\[\d{2}:\d{2}:\d{2}\]")
+GT_MARK = re.compile(r"&gt;&gt;|>>")
+
+
+def normalize_quote(s):
+    """Collapse timestamps, speaker marks and whitespace for verbatim comparison."""
+    return re.sub(r"\s+", " ", GT_MARK.sub(" ", TS_MARK.sub(" ", s))).strip()
+
+
+def build_verification_text(extraction):
+    """Build a continuous, duplicate-free verification text from caption lines.
+
+    YouTube auto-captions repeat the tail of the previous cue inside the next
+    one (rolling duplicates). Word-level suffix/prefix dedup (bounded window)
+    removes them so a verbatim quote spanning several cues still matches.
+    """
+    lines = [l.split("] ", 1)[-1] for l in extraction.splitlines()]
+    out_words = []
+    for line in lines:
+        words = normalize_quote(line).split()
+        if not words:
+            continue
+        overlap = 0
+        for size in range(min(len(out_words), len(words), 40), 2, -1):
+            if out_words[-size:] == words[:size]:
+                overlap = size
+                break
+        added = words[overlap:]
+        if added:
+            out_words.extend(added)
+    return " ".join(out_words)
+
+
 def validate(doc):
     missing = [k for k in ("source_type","source_title","source_url","published_at","text") if not doc.get(k)]
     if doc.get("source_type") not in TYPES: raise ValueError("unsupported source_type")
@@ -73,7 +106,7 @@ def validate(doc):
         iso(t["asserted_at"], "asserted_at")
         if t["stance"] not in STANCES: raise ValueError("unsupported stance")
         verification_text = doc.get("quote_verification_text", doc["text"])
-        if t["quote"] not in verification_text:
+        if normalize_quote(t["quote"]) not in normalize_quote(verification_text):
             invalid_quotes.append(index)
         for level in t.get("levels", []):
             if level.get("level_type") not in LEVELS: raise ValueError("unsupported level_type")
@@ -93,9 +126,7 @@ def main():
         source_doc = json.loads(args.source.read_text(encoding="utf-8"))
         doc["text"] = source_doc["text"]
         extraction = source_doc.get("extraction_text", source_doc["text"])
-        doc["quote_verification_text"] = " ".join(
-            line.split("] ", 1)[-1] for line in extraction.splitlines()
-        )
+        doc["quote_verification_text"] = build_verification_text(extraction)
     missing, invalid_quotes = validate(doc)
     text_hash = hashlib.sha256(doc["text"].encode()).hexdigest()
     external_id = doc.get("source_external_id")
@@ -104,15 +135,19 @@ def main():
         conn.execute("PRAGMA foreign_keys=ON")
         cur = conn.execute("INSERT OR IGNORE INTO sources(source_type,title,url,published_at,text_hash,source_external_id,is_complete,missing_fields_json) VALUES(?,?,?,?,?,?,?,?)", (doc["source_type"],doc["source_title"],doc["source_url"],doc.get("published_at"),text_hash,external_id,not bool(missing),json.dumps(missing)))
         if external_id:
-            source = conn.execute("SELECT id FROM sources WHERE source_type=? AND source_external_id=?", (doc["source_type"],external_id)).fetchone()[0]
+            row = conn.execute("SELECT id FROM sources WHERE source_type=? AND source_external_id=?", (doc["source_type"],external_id)).fetchone()
         else:
-            source = conn.execute("SELECT id FROM sources WHERE source_type=? AND url=? AND text_hash=?", (doc["source_type"],doc["source_url"],text_hash)).fetchone()[0]
+            row = None
+        if row is None:
+            # fallback: same source_type + identical URL (external_id conventions drift)
+            row = conn.execute("SELECT id FROM sources WHERE source_type=? AND url=?", (doc["source_type"],doc["source_url"])).fetchone()
+        source = row[0]
         result = "valid" if not missing and not invalid_quotes else "valid_with_quote_skips" if not missing else "incomplete"
         run = conn.execute("INSERT INTO analysis_runs(source_id,model,prompt_version,completed_at,validation_result) VALUES(?,?,?,?,?)", (source,args.model,args.prompt_version,datetime.now(timezone.utc).isoformat(),result)).lastrowid
         created = skipped = unverified_tickers = 0
         verification_text = doc.get("quote_verification_text", doc["text"])
         for t in doc.get("theses", []):
-            if t["quote"] not in verification_text:
+            if normalize_quote(t["quote"]) not in normalize_quote(verification_text):
                 skipped += 1
                 continue
             expert_id = one_id(conn,"experts",t["expert"]["name"],aliases_json=json.dumps(t["expert"].get("aliases",[])),role=t["expert"].get("role"),sources_json="[]") if t.get("expert") else None
