@@ -1,42 +1,54 @@
-# financial-experts-said: runtime contract, bootstrap, diagnostics
+# financial-experts-said: runtime contract (ClawHub skills-only), bootstrap, diagnostics
 
-## Package type reminder
+## Version pinning
 
-ClawHub release is skills-only: no Python runtime inside this skill. All commands
-run from an external, version-pinned runtime resolved via `FES_ROOT`.
+ClawHub skill version maps to a Git tag of the runtime repository:
+
+| ClawHub skill | Git tag | Commit |
+|---|---|---|
+| 0.1.3 | `openclaw-v0.1.3` | `PENDING` |
+
+Always clone the tag that matches the installed skill version; do not clone a
+moving `main`.
 
 ## Path contract
 
 | Variable | Meaning | If missing |
 |---|---|---|
-| `FES_ROOT` | Runtime directory (`pipeline/`, `chart/`) | use env var `FES_ROOT` or ask user for the cloned repo path; never derive from this skill's location |
-| `FES_WORKSPACE` | User working directory | propose a safe directory in the current project; never write inside the runtime |
+| `FES_ROOT` | Runtime directory (`pipeline/`, `chart/`) | env var or user-provided path; verify `$FES_ROOT/pipeline` and `$FES_ROOT/chart` exist |
+| `FES_WORKSPACE` | User working directory | propose a safe directory in the current project; never write inside the skill/runtime |
 | `FES_DB` | SQLite database | default `$FES_WORKSPACE/fti.db` |
 
 Always build executable paths from `FES_ROOT`. Never run `python3 pipeline/...`
 relative to the current directory.
 
-## Bootstrap (skills-only, version-pinned)
-
-Version contract: **ClawHub skill v0.1.1 → Git tag `openclaw-v0.1.1`** (immutable
-commit SHA is listed in the GitHub release notes for that tag). Do not clone `main`.
+## Bootstrap (version-pinned)
 
 ```bash
-git clone --depth 1 --branch openclaw-v0.1.1 \
+git clone --depth 1 --branch openclaw-v0.1.3 \
   https://github.com/bzSega/financial-experts-said.git "$FES_ROOT"
-export FES_ROOT="$FES_ROOT"
 ```
 
-Post-clone verification (required):
+After clone, verify the pin before any command:
 
 ```bash
-test -f "$FES_ROOT/pipeline/init_db.py" && \
-test -f "$FES_ROOT/chart/ticker_chart_html.py" && echo "runtime OK"
+# must output exactly: openclaw-v0.1.3
+git -C "$FES_ROOT" describe --exact-match --tags HEAD
+
+# must equal the pinned SHA from the table above
+if [ "$(git -C "$FES_ROOT" rev-parse HEAD)" != "e20d97fc79a7cf78b690f086465248a0cd0e5344" ]; then
+  echo "pin mismatch" >&2
+  exit 1
+fi
 ```
 
-If either file is missing → status `runtime_missing`; do not proceed.
+Abort with a clear error (`runtime_missing`, pin mismatch) if either check fails.
 
-Optional DB init (only with explicit user consent):
+Then verify both exist:
+- `"$FES_ROOT/pipeline/init_db.py"`
+- `"$FES_ROOT/chart/ticker_chart_html.py"`
+
+Then (with user consent only):
 
 ```bash
 python3 "$FES_ROOT/pipeline/init_db.py" --db "$FES_WORKSPACE/fti.db"
@@ -46,14 +58,15 @@ python3 "$FES_ROOT/pipeline/seed_demo.py" --db "$FES_WORKSPACE/fti.db"   # demo 
 ## Dependencies
 
 Python 3.10+ (stdlib only for the pipeline). Charts need internet:
-MOEX ISS API + lightweight-charts CDN (Apache 2.0).
+MOEX ISS API + lightweight-charts CDN (Apache 2.0) — see the network
+disclosure in [chart.md](chart.md).
 
 ## Diagnostics
 
 | Status | Meaning |
 |---|---|
 | `ready` | runtime, deps and DB available |
-| `runtime_missing` | no `FES_ROOT` or required scripts — offer the pinned bootstrap above |
+| `runtime_missing` | no `FES_ROOT` or required scripts — offer version-pinned bootstrap |
 | `dependencies_missing` | python modules missing |
 | `database_missing` | offer init/demo seed, only with user consent |
 | `source_incomplete` | indexing lacks URL, date or text |

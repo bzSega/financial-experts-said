@@ -15,15 +15,17 @@ dashboard and obtain user confirmation when network access has not already
 been approved.
 
 ## Использование
+Все команды строятся строго от `FES_ROOT` и `FES_DB` (никогда — относительно текущей директории):
+
 ```bash
 # PNG-график
-python3 chart/ticker_chart.py --db fti.db --asset IMOEX --out chart.png
+python3 "$FES_ROOT/chart/ticker_chart.py" --db "$FES_DB" --asset IMOEX --out chart.png
 
 # Интерактивный HTML (свечи MOEX + уровни экспертов, фильтры, табы)
-python3 chart/ticker_chart_html.py --db fti.db --out dashboard.html
+python3 "$FES_ROOT/chart/ticker_chart_html.py" --db "$FES_DB" --out dashboard.html
 
 # Реестр-дашборд (таблица тезисов + детализация + мини-графики уровней)
-python3 pipeline/dashboard.py --db fti.db --output dashboard.html
+python3 "$FES_ROOT/pipeline/dashboard.py" --db "$FES_DB" --output dashboard.html
 ```
 HTML-графика использует `lightweight-charts` с CDN — нужен интернет при открытии.
 
